@@ -1,92 +1,81 @@
-<!DOCTYPE html><html lang="pt-BR">
+<!DOCTYPE html>
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CinePop - Loja de APKs</title>
+  <title>TeraDirect - Gerador de Links XUI</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background: #ffffff;
-      color: #333;
-      padding: 20px;
+      background-color: #1e1e2f;
+      color: #fff;
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem;
     }
     h1 {
-      color: purple;
+      color: #9c27b0;
     }
-    .form, .apk-list {
-      margin-top: 20px;
-    }
-    .apk {
-      border: 1px solid #ccc;
-      padding: 10px;
-      margin-bottom: 10px;
-      border-radius: 8px;
-    }
-    .apk a {
-      color: purple;
-      font-weight: bold;
-    }
-    input, button {
-      padding: 10px;
-      margin: 5px 0;
+    input, button, textarea {
       width: 100%;
-      border-radius: 6px;
-      border: 1px solid #ccc;
+      max-width: 500px;
+      padding: 1rem;
+      margin: 1rem 0;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+    }
+    input {
+      background: #333;
+      color: #fff;
     }
     button {
-      background: purple;
-      color: white;
+      background: #9c27b0;
+      color: #fff;
       cursor: pointer;
+    }
+    textarea {
+      height: 120px;
+      background: #111;
+      color: #0f0;
+      resize: none;
     }
   </style>
 </head>
 <body>
-  <h1>CinePop - Loja de APKs</h1>
-  <div class="form">
-    <h2>Enviar novo APK</h2>
-    <form id="uploadForm">
-      <input type="text" id="appName" placeholder="Nome do App" required>
-      <input type="file" id="apkFile" accept=".apk" required>
-      <button type="submit">Enviar e Gerar Link</button>
-    </form>
-  </div>  <div class="apk-list">
-    <h2>APKs Disponíveis</h2>
-    <div id="apkContainer"></div>
-  </div>  <script>
-    const form = document.getElementById('uploadForm');
-    const apkContainer = document.getElementById('apkContainer');
+  <h1>TeraDirect</h1>
+  <p>Cole abaixo o link do TeraBox:</p>
+  <input type="text" id="linkTera" placeholder="https://1024terabox.com/s/...">
+  <button onclick="gerarLink()">Gerar Link Direto</button>
 
-    let apks = JSON.parse(localStorage.getItem('cinepop_apks') || '[]');
+  <textarea id="resultado" readonly placeholder="O link direto aparecerá aqui..."></textarea>
 
-    const renderApks = () => {
-      apkContainer.innerHTML = '';
-      apks.forEach(apk => {
-        apkContainer.innerHTML += `
-          <div class="apk">
-            <strong>${apk.name}</strong><br>
-            <a href="${apk.url}" target="_blank">${apk.short}</a>
-          </div>
-        `;
-      });
-    };
+  <script>
+    async function gerarLink() {
+      const link = document.getElementById("linkTera").value.trim();
+      const output = document.getElementById("resultado");
+      output.value = "Buscando link direto... Aguarde...";
 
-    renderApks();
+      try {
+        const proxy = `https://corsproxy.io/?${encodeURIComponent(link)}`;
+        const res = await fetch(proxy);
+        const html = await res.text();
 
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const name = document.getElementById('appName').value;
-      const file = document.getElementById('apkFile').files[0];
-      if (!file) return;
+        const regex = /(https:\/\/download[^\"]+\.mp4[^\"]+)/;
+        const match = html.match(regex);
 
-      const fileName = `${Date.now()}-${file.name}`;
-      const url = URL.createObjectURL(file);
-      const short = 'cinepop.com/' + Math.random().toString(36).substr(2, 5);
-
-      const apk = { name, url, short };
-      apks.push(apk);
-      localStorage.setItem('cinepop_apks', JSON.stringify(apks));
-      renderApks();
-      form.reset();
-    });
-  </script></body>
+        if (match && match[1]) {
+          const linkDireto = match[1];
+          const m3u = `#EXTINF:-1 group-title=\"TeraBox\", Vídeo\n${linkDireto}`;
+          output.value = m3u;
+        } else {
+          output.value = "Não foi possível encontrar um link MP4 direto. Tente abrir o link no navegador e clique em play antes de colar aqui.";
+        }
+      } catch (err) {
+        output.value = "Erro ao buscar o link. Verifique o link do TeraBox ou tente novamente mais tarde.";
+      }
+    }
+  </script>
+</body>
 </html>
